@@ -47,12 +47,46 @@ pio run -t upload       # flash
 pio device monitor      # open serial
 ```
 
+Notes:
+- `upload_speed` is 460800 — this board's serial chip fails at 921600.
+- The display is an ST7735 **BLACKTAB** variant (`-DST7735_BLACKTAB` in
+  `platformio.ini`). If a different module shows shifted pixels or wrong
+  colors, try `GREENTAB`, `GREENTAB2/3`, or `REDTAB` instead.
+- The onboard BOOT button (GPIO0) triggers the sequence too, so no external
+  button is needed for testing.
+
+## Asset pipeline
+
+Pixel art and fonts are converted to C headers at dev time (no filesystem
+upload needed). Requires Python 3 with Pillow (`pip3 install pillow`).
+
+Convert a PNG to an RGB565 image header (must match display size, 128x160):
+
+```
+python3 scripts/png_to_rgb565.py assets/cake-1.png include/cake_frame_1.h cake_frame_1
+```
+
+Convert a TTF to an Adafruit GFX font header (TFT_eSPI FreeFont, 1-bit,
+no anti-aliasing — suited to pixel fonts):
+
+```
+python3 scripts/ttf_to_gfx.py assets/rainyhearts.ttf include/rainyhearts_font.h 16
+```
+
+After regenerating headers, rebuild and flash with `pio run -t upload`.
+
+Images draw with `tft.pushImage(...)` — `tft.setSwapBytes(true)` is required
+because the generated arrays are big-endian RGB565. Text draws over the image
+with a transparent background (set only a foreground color).
+
 ## Project layout
 
 ```
 src/             firmware source
-include/         project-wide headers
+include/         generated image/font headers + project headers
 lib/             local libraries
+assets/          source art (PNG) and fonts (TTF)
+scripts/         asset conversion scripts (PNG -> RGB565, TTF -> GFX font)
 data/            files for SPIFFS / LittleFS (sprites, etc.)
 docs/            wiring diagrams, PCB notes
 ```
