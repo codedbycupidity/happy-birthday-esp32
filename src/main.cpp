@@ -27,7 +27,7 @@ const Note melody[] = {
 constexpr size_t MELODY_LEN = sizeof(melody) / sizeof(melody[0]);
 
 // Draw a cake frame, optionally with text over it
-void drawCake(uint8_t frame, const char *text = nullptr, uint8_t textSize = 1, int16_t textY = 38) {
+void drawCake(uint8_t frame, const char *text = nullptr, uint8_t textSize = 1, int16_t textY = 36) {
     tft.pushImage(0, 0, CAKE_W, CAKE_H, CAKE_FRAMES[frame % CAKE_FRAME_COUNT]);
     if (text) {
         tft.setFreeFont(&rainyhearts16px);
@@ -85,6 +85,11 @@ void setup() {
     tft.init();
     tft.setRotation(0);
     tft.setSwapBytes(true);  // image data is big-endian RGB565
+    // Horizontal mirror: clear MADCTL MX bit. Rotation-0 BLACKTAB is
+    // MX|MY|BGR (0xC8); clearing MX -> MY (0x80). This clone also flips its
+    // subpixel order when mirrored, so use RGB (drop the 0x08 BGR bit).
+    tft.writecommand(0x36);  // MADCTL
+    tft.writedata(0x80);
     drawCake(0);
 }
 
