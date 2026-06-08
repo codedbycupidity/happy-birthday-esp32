@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #include <TFT_eSPI.h>
-#include <FastLED.h>
 
 #include "cake_frames.h"
 #include "rainyhearts_font.h"
@@ -8,10 +7,6 @@
 constexpr uint8_t PIN_BUTTON = 14;
 constexpr uint8_t PIN_BOOT_BTN = 0;  // onboard BOOT button, works without wiring
 constexpr uint8_t PIN_BUZZER = 25;
-constexpr uint8_t PIN_LED_DATA = 13;
-
-constexpr uint8_t NUM_LEDS = 8;
-CRGB leds[NUM_LEDS];
 
 TFT_eSPI tft = TFT_eSPI();
 
@@ -40,17 +35,9 @@ void drawCake(uint8_t frame, const char *text = nullptr, uint8_t textSize = 1, i
     }
 }
 
-void sparkle() {
-    for (int i = 0; i < NUM_LEDS; i++) {
-        leds[i] = CHSV(random8(), 200, 255);
-    }
-    FastLED.show();
-}
-
-// LEDs sparkle along while the melody plays
+// Buzzer plays the melody note by note
 void playMelody() {
     for (size_t i = 0; i < MELODY_LEN; i++) {
-        sparkle();
         if (melody[i].freq > 0) {
             tone(PIN_BUZZER, melody[i].freq, melody[i].ms);
         }
@@ -78,10 +65,6 @@ void setup() {
     pinMode(PIN_BOOT_BTN, INPUT_PULLUP);
     pinMode(PIN_BUZZER, OUTPUT);
 
-    FastLED.addLeds<WS2812B, PIN_LED_DATA, GRB>(leds, NUM_LEDS);
-    FastLED.setBrightness(60);
-    FastLED.clear(true);
-
     tft.init();
     tft.setRotation(0);
     tft.setSwapBytes(true);  // image data is big-endian RGB565
@@ -101,7 +84,6 @@ void loop() {
         delay(20);
         countdown();
         playMelody();
-        FastLED.clear(true);
         drawCake(0);  // back to idle smile
     }
     lastButton = now;
